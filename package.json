@@ -1,0 +1,10 @@
+{
+  "name": "com.atayanki.servicelocator",
+  "version": "1.0.0",
+  "displayName": "Service Locator",
+  "description": "A flexible and powerful Service Locator pattern implementation for Unity with support for global, scene, and hierarchical service resolution.",
+  "unity": "6000.0",
+  "author": {
+    "name": "AtaYanki"
+  }
+}
