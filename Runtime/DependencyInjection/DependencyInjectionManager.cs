@@ -39,8 +39,11 @@ namespace AtaYanki.OmniServio
         [SerializeField] private bool injectInactiveObjects = false;
 
         [Header("Exception Handler Settings")]
-        [Tooltip("Choose how to handle injection errors: Warning (logs warnings) or ThrowException (throws exceptions)")]
+        [Tooltip("Choose how to handle injection errors: Warning (logs warnings) or ThrowException (throws exceptions). If 'Use Global Config' is enabled, this value is ignored.")]
         [SerializeField] private InjectionExceptionHandlerMode exceptionHandlerMode = InjectionExceptionHandlerMode.Warning;
+        
+        [Tooltip("Use the global OmniServioConfig for exception handler mode instead of the local setting.")]
+        [SerializeField] private bool useGlobalConfig = true;
 
         private void Awake()
         {
@@ -55,10 +58,22 @@ namespace AtaYanki.OmniServio
 
         /// <summary>
         /// Configures the exception handler based on the selected mode.
+        /// Uses global config if enabled, otherwise uses local setting.
         /// </summary>
         private void ConfigureExceptionHandler()
         {
-            IInjectionExceptionHandler handler = exceptionHandlerMode switch
+            InjectionExceptionHandlerMode mode;
+            
+            if (useGlobalConfig && OmniServioConfig.Instance != null)
+            {
+                mode = OmniServioConfig.Instance.DefaultExceptionHandlerMode;
+            }
+            else
+            {
+                mode = exceptionHandlerMode;
+            }
+
+            IInjectionExceptionHandler handler = mode switch
             {
                 InjectionExceptionHandlerMode.ThrowException => new ThrowExceptionHandler(),
                 InjectionExceptionHandlerMode.Warning => new WarningExceptionHandler(),

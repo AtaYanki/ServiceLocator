@@ -101,13 +101,23 @@ namespace AtaYanki.OmniServio
         public OmniServio Register<T>(T service)
         {
             _serviceManager.Register(service);
+            PublishServiceRegisteredEvent(typeof(T), service);
             return this;
         }
 
         public OmniServio Register(Type type, object service)
         {
             _serviceManager.Register(type, service);
+            PublishServiceRegisteredEvent(type, service);
             return this;
+        }
+
+        /// <summary>
+        /// Publishes a service registration event to notify subscribers.
+        /// </summary>
+        private void PublishServiceRegisteredEvent(Type serviceType, object service)
+        {
+            ServiceRegistrationEventBus.Publish(serviceType, service, this);
         }
 
         #region Register Updatable
@@ -116,6 +126,7 @@ namespace AtaYanki.OmniServio
         {
             _serviceManager.Register(typeof(T), service);
             _updateManager.RegisterUpdatable(service);
+            PublishServiceRegisteredEvent(typeof(T), service);
             return this;
         }
 
@@ -123,6 +134,7 @@ namespace AtaYanki.OmniServio
         {
             _serviceManager.Register(type, service);
             _updateManager.RegisterUpdatable(type, service);
+            PublishServiceRegisteredEvent(type, service);
             return this;
         }
 
@@ -134,6 +146,7 @@ namespace AtaYanki.OmniServio
         {
             _serviceManager.Register(typeof(T), service);
             _updateManager.RegisterFixedUpdatable(service);
+            PublishServiceRegisteredEvent(typeof(T), service);
             return this;
         }
 
@@ -141,6 +154,7 @@ namespace AtaYanki.OmniServio
         {
             _serviceManager.Register(type, service);
             _updateManager.RegisterFixedUpdatable(type, service);
+            PublishServiceRegisteredEvent(type, service);
             return this;
         }
 
@@ -152,6 +166,7 @@ namespace AtaYanki.OmniServio
         {
             _serviceManager.Register(typeof(T), service);
             _updateManager.RegisterLateUpdatable(service);
+            PublishServiceRegisteredEvent(typeof(T), service);
             return this;
         }
 
@@ -159,6 +174,7 @@ namespace AtaYanki.OmniServio
         {
             _serviceManager.Register(type, service);
             _updateManager.RegisterLateUpdatable(type, service);
+            PublishServiceRegisteredEvent(type, service);
             return this;
         }
 
@@ -170,6 +186,7 @@ namespace AtaYanki.OmniServio
         {
             _serviceManager.Register(typeof(T), service);
             _destroyManager.RegisterDestroyable(service);
+            PublishServiceRegisteredEvent(typeof(T), service);
             return this;
         }
 
@@ -177,6 +194,7 @@ namespace AtaYanki.OmniServio
         {
             _serviceManager.Register(type, service);
             _destroyManager.RegisterDestroyable(service);
+            PublishServiceRegisteredEvent(type, service);
             return this;
         }
 

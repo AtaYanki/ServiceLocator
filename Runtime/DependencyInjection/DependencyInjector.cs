@@ -160,7 +160,11 @@ namespace AtaYanki.OmniServio
         /// Tries to get a service from the OmniServio using reflection.
         /// Uses the TryGet method which doesn't throw exceptions.
         /// </summary>
-        private static bool TryGetService(OmniServio locator, Type serviceType, out object service)
+        /// <param name="locator">The OmniServio instance to get the service from.</param>
+        /// <param name="serviceType">The type of service to retrieve.</param>
+        /// <param name="service">The service instance if found, null otherwise.</param>
+        /// <returns>True if the service was found, false otherwise.</returns>
+        public static bool TryGetService(OmniServio locator, Type serviceType, out object service)
         {
             service = null;
 
