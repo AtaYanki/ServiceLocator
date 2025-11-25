@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace AtaYanki.ServiceLocator
+namespace AtaYanki.OmniServio
 {
     public interface IUpdatable
     {
@@ -25,14 +25,22 @@ namespace AtaYanki.ServiceLocator
         private readonly List<IFixedUpdatable> _fixedUpdatableObjects = new List<IFixedUpdatable>();
         private readonly List<ILateUpdatable> _lateUpdatableObjects = new List<ILateUpdatable>();
 
-        public void RegisterUpdatable(Type type)
+        public void RegisterUpdatable(Type type, object service)
         {
-            if (type is not IUpdatable)
+            if (service == null)
+            {
+                throw new ArgumentNullException(nameof(service), "Service instance cannot be null.");
+            }
+
+            if (!typeof(IUpdatable).IsAssignableFrom(type))
             {
                 throw new ArgumentException($"Invalid argument in UpdateManager.RegisterUpdatable: Type '{type.FullName}' does not implement the required interface 'IUpdatable'. Please ensure that the provided type is compatible with the IUpdatable interface.", nameof(type));
             }
 
-            IUpdatable updatable = type as IUpdatable;
+            if (service is not IUpdatable updatable)
+            {
+                throw new ArgumentException($"Service instance of type '{service.GetType().FullName}' does not implement IUpdatable.", nameof(service));
+            }
 
             if (!_updatableObjects.Contains(updatable))
                 _updatableObjects.Add(updatable);
@@ -40,14 +48,11 @@ namespace AtaYanki.ServiceLocator
 
         public void RegisterUpdatable<T>(T service)
         {
-            Type type = typeof(T);
-
-            if (service is not IUpdatable)
+            if (service is not IUpdatable updatable)
             {
-                throw new ArgumentException($"Invalid argument in UpdateManager.RegisterUpdatable: Type '{type.FullName}' does not implement the required interface 'IUpdatable'. Please ensure that the provided type is compatible with the IUpdatable interface.", nameof(type));
+                Type type = typeof(T);
+                throw new ArgumentException($"Invalid argument in UpdateManager.RegisterUpdatable: Type '{type.FullName}' does not implement the required interface 'IUpdatable'. Please ensure that the provided type is compatible with the IUpdatable interface.", nameof(service));
             }
-
-            IUpdatable updatable = service as IUpdatable;
 
             if (!_updatableObjects.Contains(updatable))
                 _updatableObjects.Add(updatable);
@@ -59,14 +64,22 @@ namespace AtaYanki.ServiceLocator
                 _updatableObjects.Remove(updatable);
         }
 
-        public void RegisterFixedUpdatable(Type type)
+        public void RegisterFixedUpdatable(Type type, object service)
         {
-            if (type is not IFixedUpdatable)
+            if (service == null)
+            {
+                throw new ArgumentNullException(nameof(service), "Service instance cannot be null.");
+            }
+
+            if (!typeof(IFixedUpdatable).IsAssignableFrom(type))
             {
                 throw new ArgumentException($"Invalid argument in UpdateManager.RegisterFixedUpdatable: Type '{type.FullName}' does not implement the required interface 'IFixedUpdatable'. Please ensure that the provided type is compatible with the IFixedUpdatable interface.", nameof(type));
             }
 
-            IFixedUpdatable fixedUpdatable = type as IFixedUpdatable;
+            if (service is not IFixedUpdatable fixedUpdatable)
+            {
+                throw new ArgumentException($"Service instance of type '{service.GetType().FullName}' does not implement IFixedUpdatable.", nameof(service));
+            }
 
             if (!_fixedUpdatableObjects.Contains(fixedUpdatable))
                 _fixedUpdatableObjects.Add(fixedUpdatable);
@@ -74,14 +87,11 @@ namespace AtaYanki.ServiceLocator
 
         public void RegisterFixedUpdatable<T>(T service)
         {
-            Type type = typeof(T);
-
-            if (type is not IFixedUpdatable)
+            if (service is not IFixedUpdatable fixedUpdatable)
             {
-                throw new ArgumentException($"Invalid argument in UpdateManager.RegisterFixedUpdatable: Type '{type.FullName}' does not implement the required interface 'IFixedUpdatable'. Please ensure that the provided type is compatible with the IFixedUpdatable interface.", nameof(type));
+                Type type = typeof(T);
+                throw new ArgumentException($"Invalid argument in UpdateManager.RegisterFixedUpdatable: Type '{type.FullName}' does not implement the required interface 'IFixedUpdatable'. Please ensure that the provided type is compatible with the IFixedUpdatable interface.", nameof(service));
             }
-
-            IFixedUpdatable fixedUpdatable = service as IFixedUpdatable;
 
             if (!_fixedUpdatableObjects.Contains(fixedUpdatable))
                 _fixedUpdatableObjects.Add(fixedUpdatable);
@@ -93,14 +103,22 @@ namespace AtaYanki.ServiceLocator
                 _fixedUpdatableObjects.Remove(fixedUpdatable);
         }
 
-        public void RegisterLateUpdatable(Type type)
+        public void RegisterLateUpdatable(Type type, object service)
         {
-            if (type is not ILateUpdatable)
+            if (service == null)
+            {
+                throw new ArgumentNullException(nameof(service), "Service instance cannot be null.");
+            }
+
+            if (!typeof(ILateUpdatable).IsAssignableFrom(type))
             {
                 throw new ArgumentException($"Invalid argument in UpdateManager.RegisterLateUpdatable: Type '{type.FullName}' does not implement the required interface 'ILateUpdatable'. Please ensure that the provided type is compatible with the ILateUpdatable interface.", nameof(type));
             }
 
-            ILateUpdatable lateUpdatable = type as ILateUpdatable;
+            if (service is not ILateUpdatable lateUpdatable)
+            {
+                throw new ArgumentException($"Service instance of type '{service.GetType().FullName}' does not implement ILateUpdatable.", nameof(service));
+            }
 
             if (!_lateUpdatableObjects.Contains(lateUpdatable))
                 _lateUpdatableObjects.Add(lateUpdatable);
@@ -108,14 +126,11 @@ namespace AtaYanki.ServiceLocator
 
         public void RegisterLateUpdatable<T>(T service)
         {
-            Type type = typeof(T);
-
-            if (type is not ILateUpdatable)
+            if (service is not ILateUpdatable lateUpdatable)
             {
-                throw new ArgumentException($"Invalid argument in UpdateManager.RegisterLateUpdatable: Type '{type.FullName}' does not implement the required interface 'ILateUpdatable'. Please ensure that the provided type is compatible with the ILateUpdatable interface.", nameof(type));
+                Type type = typeof(T);
+                throw new ArgumentException($"Invalid argument in UpdateManager.RegisterLateUpdatable: Type '{type.FullName}' does not implement the required interface 'ILateUpdatable'. Please ensure that the provided type is compatible with the ILateUpdatable interface.", nameof(service));
             }
-
-            ILateUpdatable lateUpdatable = service as ILateUpdatable;
 
             if (!_lateUpdatableObjects.Contains(lateUpdatable))
                 _lateUpdatableObjects.Add(lateUpdatable);

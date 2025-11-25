@@ -1,6 +1,6 @@
-# Service Locator
+# OmniServio
 
-A flexible and powerful Service Locator pattern implementation for Unity. This package provides a robust dependency injection system with support for global, scene-specific, and hierarchical service resolution, making it easy to manage dependencies across your Unity project.
+A flexible and powerful dependency injection and service locator system for Unity. This package provides a robust dependency injection system with support for global, scene-specific, and hierarchical service resolution, automatic dependency injection via `[Inject]` attribute, and reflection-based injection, making it easy to manage dependencies across your Unity project.
 
 ---
 
@@ -8,6 +8,7 @@ A flexible and powerful Service Locator pattern implementation for Unity. This p
 
 * **Global & Scene Services** – Register services globally or per-scene with automatic lifecycle management
 * **Hierarchical Resolution** – Services resolve through parent hierarchy, scene, and global locators automatically
+* **Automatic Dependency Injection** – Use `[Inject]` attribute for automatic field and property injection via reflection
 * **Update Integration** – Register services that need `Update()`, `FixedUpdate()`, or `LateUpdate()` callbacks
 * **Lifecycle Management** – Automatic cleanup with `IDestroyable` interface support
 * **Type-Safe** – Strongly-typed service registration and retrieval
@@ -25,7 +26,7 @@ A flexible and powerful Service Locator pattern implementation for Unity. This p
 3. Enter the repository URL:
 
 ```
-https://github.com/AtaYanki/ServiceLocator.git
+https://github.com/AtaYanki/OmniServio.git
 ```
 
 4. Wait for Unity to download and import the package
@@ -37,11 +38,11 @@ https://github.com/AtaYanki/ServiceLocator.git
 
 ## 🛠️ How It Works
 
-The Service Locator pattern provides a centralized registry for dependencies, allowing components to request services without knowing their concrete implementations. This package implements three levels of service resolution:
+OmniServio combines the Service Locator pattern with automatic dependency injection. It provides a centralized registry for dependencies, allowing components to request services without knowing their concrete implementations. This package implements three levels of service resolution:
 
-1. **Parent Hierarchy** – Checks parent GameObjects for ServiceLocator components
-2. **Scene Level** – Falls back to scene-specific ServiceLocator
-3. **Global Level** – Finally checks the global ServiceLocator
+1. **Parent Hierarchy** – Checks parent GameObjects for OmniServio components
+2. **Scene Level** – Falls back to scene-specific OmniServio
+3. **Global Level** – Finally checks the global OmniServio
 
 This hierarchy ensures services are resolved from the most specific to the most general context.
 
@@ -68,50 +69,52 @@ public class AudioService : IAudioService
 
 ### 2. Register Services
 
-Create a bootstrapper to register your services. You can use either a Global or Scene ServiceLocator:
+Create a bootstrapper to register your services. You can use either a Global or Scene OmniServio:
 
-**Global ServiceLocator** (persists across scenes):
+**Global OmniServio** (persists across scenes):
 
 ```csharp
-using AtaYanki.ServiceLocator;
+using AtaYanki.OmniServio;
 using UnityEngine;
 
-public class GlobalBootstrapper : ServiceLocatorGlobalBootstrapper
+public class GlobalBootstrapper : OmniServioGlobalBootstrapper
 {
     protected override void Bootstrap()
     {
         base.Bootstrap(); // Important: Call base to configure as global
         
         // Register services
-        ServiceLocator
+        OmniServio
             .Register<IAudioService>(new AudioService())
             .Register<ISaveService>(new SaveService());
     }
 }
 ```
 
-**Scene ServiceLocator** (per-scene):
+**Scene OmniServio** (per-scene):
 
 ```csharp
-using AtaYanki.ServiceLocator;
+using AtaYanki.OmniServio;
 using UnityEngine;
 
-public class SceneBootstrapper : ServiceLocatorSceneBootstrapper
+public class SceneBootstrapper : OmniServioSceneBootstrapper
 {
     protected override void Bootstrap()
     {
         base.Bootstrap(); // Important: Call base to configure for scene
         
         // Register scene-specific services
-        ServiceLocator.Register<IGameplayService>(new GameplayService());
+        OmniServio.Register<IGameplayService>(new GameplayService());
     }
 }
 ```
 
 ### 3. Retrieve Services
 
+**Method 1: Manual Retrieval**
+
 ```csharp
-using AtaYanki.ServiceLocator;
+using AtaYanki.OmniServio;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -121,7 +124,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         // Automatically resolves from hierarchy → scene → global
-        ServiceLocator.For(this).Get(out _audioService);
+        OmniServio.For(this).Get(out _audioService);
     }
     
     void OnJump()
@@ -131,9 +134,102 @@ public class PlayerController : MonoBehaviour
 }
 ```
 
+**Method 2: Automatic Dependency Injection (Recommended)**
+
+```csharp
+using AtaYanki.OmniServio;
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    [Inject] private IAudioService _audioService;
+    [Inject] private ISaveService _saveService;
+    
+    void Start()
+    {
+        // Dependencies are automatically injected before Start() is called
+        // No need to add any components - injection happens automatically!
+    }
+    
+    void OnJump()
+    {
+        _audioService?.PlaySound("jump");
+    }
+}
+```
+
+**Automatic injection is handled automatically!** When you add a `OmniServioSceneBootstrapper` or `OmniServioGlobalBootstrapper` to your scene, a `DependencyInjectionManager` is automatically created. This manager:
+
+1. Runs after all bootstrappers complete (execution order 100)
+2. Automatically injects dependencies into all MonoBehaviour components in the scene
+3. Ensures services are registered before injection occurs
+
+**No manual setup required!** Just:
+1. Add a bootstrapper to your scene (Global or Scene)
+2. Register your services in the bootstrapper
+3. Mark fields/properties with `[Inject]` attribute
+4. Dependencies are injected automatically!
+
 ---
 
 ## 🎯 Advanced Usage
+
+### Automatic Dependency Injection
+
+OmniServio supports automatic dependency injection using the `[Inject]` attribute. This eliminates the need for manual service retrieval.
+
+**Field Injection:**
+
+```csharp
+public class GameManager : MonoBehaviour
+{
+    [Inject] private IAudioService _audioService;
+    [Inject] private ISaveService _saveService;
+    
+    // Fields are automatically injected before Start()
+}
+```
+
+**Property Injection:**
+
+```csharp
+public class GameManager : MonoBehaviour
+{
+    [Inject] public IAudioService AudioService { get; private set; }
+    [Inject] public ISaveService SaveService { get; private set; }
+}
+```
+
+**Global Service Injection:**
+
+Use `UseGlobal = true` to always inject from the global OmniServio:
+
+```csharp
+public class ConfigManager : MonoBehaviour
+{
+    [Inject(UseGlobal = true)] private IConfigService _configService;
+    // Always uses OmniServio.Global, regardless of hierarchy
+}
+```
+
+**Manual Injection:**
+
+You can also manually trigger injection:
+
+```csharp
+using AtaYanki.OmniServio;
+
+public class CustomComponent : MonoBehaviour
+{
+    [Inject] private IAudioService _audioService;
+    
+    void Awake()
+    {
+        // Manually inject dependencies
+        DependencyInjector.Inject(this);
+    }
+}
+```
 
 ### Registering Updatable Services
 
@@ -144,21 +240,21 @@ public class GameTimer : IUpdatable
 {
     private float _time;
     
-    public void Update()
+    public void Update(float deltaTime)
     {
-        _time += Time.deltaTime;
+        _time += deltaTime;
     }
     
     public float GetTime() => _time;
 }
 
 // Register as updatable
-ServiceLocator.Global.RegisterUpdatable<GameTimer>(new GameTimer());
+OmniServio.Global.RegisterUpdatable<GameTimer>(new GameTimer());
 ```
 
 ### Registering Destroyable Services
 
-Services can implement `IDestroyable` to receive cleanup callbacks when the ServiceLocator is destroyed:
+Services can implement `IDestroyable` to receive cleanup callbacks when the OmniServio is destroyed:
 
 ```csharp
 public class NetworkManager : IDestroyable
@@ -171,7 +267,7 @@ public class NetworkManager : IDestroyable
 }
 
 // Register as destroyable
-ServiceLocator.Global.RegisterDestroyable<NetworkManager>(new NetworkManager());
+OmniServio.Global.RegisterDestroyable<NetworkManager>(new NetworkManager());
 ```
 
 ### Direct Global Access
@@ -180,17 +276,17 @@ For services that should always be global:
 
 ```csharp
 // Register globally
-ServiceLocator.Global.Register<IAudioService>(new AudioService());
+OmniServio.Global.Register<IAudioService>(new AudioService());
 
 // Retrieve globally
-ServiceLocator.Global.Get<IAudioService>(out IAudioService audioService);
+OmniServio.Global.Get<IAudioService>(out IAudioService audioService);
 ```
 
 ### Scene-Specific Services
 
 ```csharp
-// Get the ServiceLocator for a specific scene
-ServiceLocator sceneLocator = ServiceLocator.ForSceneOf(this);
+// Get the OmniServio for a specific scene
+OmniServio sceneLocator = OmniServio.ForSceneOf(this);
 
 // Register scene-specific service
 sceneLocator.Register<IGameplayService>(new GameplayService());
@@ -201,7 +297,7 @@ sceneLocator.Register<IGameplayService>(new GameplayService());
 The fluent API allows chaining multiple registrations:
 
 ```csharp
-ServiceLocator.Global
+OmniServio.Global
     .Register<IAudioService>(new AudioService())
     .Register<ISaveService>(new SaveService())
     .RegisterUpdatable<GameTimer>(new GameTimer())
@@ -214,53 +310,68 @@ ServiceLocator.Global
 
 ```
 Runtime/
-  ├── ServiceLocator.cs              # Main ServiceLocator component
-  ├── Bootstrapper.cs                # Base bootstrapper classes
-  ├── ServiceManager.cs              # Core service registry
-  ├── UpdateManager.cs               # Update callback management
-  ├── DestroyManager.cs              # Lifecycle cleanup management
-  └── ServiceLocatorExtensions.cs   # Utility extensions
+  ├── OmniServio.cs                    # Main OmniServio component
+  ├── Bootstrapper.cs                  # Base bootstrapper classes (execution order -100)
+  ├── ServiceManager.cs                # Core service registry
+  ├── UpdateManager.cs                 # Update callback management
+  ├── DestroyManager.cs                # Lifecycle cleanup management
+  ├── OmniServioExtensions.cs          # Utility extensions
+  ├── InjectAttribute.cs               # [Inject] attribute for DI
+  ├── DependencyInjector.cs            # Reflection-based injection system
+  ├── DependencyInjectionManager.cs    # Automatic injection manager (execution order 100)
+  └── AutoInjectComponent.cs           # [DEPRECATED] Manual injection component
+
+Editor/
+  └── OmniServioMenuItems.cs          # Unity menu integration
 
 Samples/
   ├── Scripts/
-  │   ├── SampleServices.cs         # Example service interfaces/implementations
-  │   ├── SampleBootstrapper.cs     # Example bootstrapper
-  │   └── SampleConsumer.cs         # Example service consumer
+  │   ├── SampleServices.cs          # Example service interfaces/implementations
+  │   ├── SampleBootstrapper.cs      # Example bootstrapper
+  │   └── SampleConsumer.cs          # Example service consumer
 ```
 
 ---
 
 ## ⚙️ API Reference
 
-### ServiceLocator
+### OmniServio
 
 **Static Properties:**
-- `static ServiceLocator Global { get; }` – Access the global ServiceLocator instance
+- `static OmniServio Global { get; }` – Access the global OmniServio instance
 
 **Static Methods:**
-- `static ServiceLocator For(MonoBehaviour monoBehaviour)` – Get ServiceLocator for a MonoBehaviour (hierarchy → scene → global)
-- `static ServiceLocator ForSceneOf(MonoBehaviour monoBehaviour)` – Get ServiceLocator for a specific scene
+- `static OmniServio For(MonoBehaviour monoBehaviour)` – Get OmniServio for a MonoBehaviour (hierarchy → scene → global)
+- `static OmniServio ForSceneOf(MonoBehaviour monoBehaviour)` – Get OmniServio for a specific scene
 
 **Instance Methods:**
-- `ServiceLocator Register<T>(T service)` – Register a service by type
-- `ServiceLocator Register(Type type, object service)` – Register a service with explicit type
-- `ServiceLocator RegisterUpdatable<T>(T service)` – Register a service that implements `IUpdatable`
-- `ServiceLocator RegisterFixedUpdatable<T>(T service)` – Register a service that implements `IFixedUpdatable`
-- `ServiceLocator RegisterLateUpdatable<T>(T service)` – Register a service that implements `ILateUpdatable`
-- `ServiceLocator RegisterDestroyable<T>(T service)` – Register a service that implements `IDestroyable`
-- `ServiceLocator Get<T>(out T service)` – Retrieve a service (throws if not found)
+- `OmniServio Register<T>(T service)` – Register a service by type
+- `OmniServio Register(Type type, object service)` – Register a service with explicit type
+- `OmniServio RegisterUpdatable<T>(T service)` – Register a service that implements `IUpdatable`
+- `OmniServio RegisterFixedUpdatable<T>(T service)` – Register a service that implements `IFixedUpdatable`
+- `OmniServio RegisterLateUpdatable<T>(T service)` – Register a service that implements `ILateUpdatable`
+- `OmniServio RegisterDestroyable<T>(T service)` – Register a service that implements `IDestroyable`
+- `OmniServio Get<T>(out T service)` – Retrieve a service (throws if not found)
+
+### Dependency Injection
+
+- `[Inject]` – Attribute to mark fields and properties for automatic injection
+- `[Inject(UseGlobal = true)]` – Always inject from global OmniServio
+- `DependencyInjector.Inject(MonoBehaviour component, OmniServio omniServio = null)` – Manually inject dependencies
+- `DependencyInjectionManager` – Automatically created by bootstrappers to handle injection (execution order 100)
+- `AutoInjectComponent` – [DEPRECATED] No longer needed - injection is automatic via DependencyInjectionManager
 
 ### Interfaces
 
 - `IUpdatable` – Implement to receive `Update()` callbacks
 - `IFixedUpdatable` – Implement to receive `FixedUpdate()` callbacks
 - `ILateUpdatable` – Implement to receive `LateUpdate()` callbacks
-- `IDestroyable` – Implement to receive cleanup callbacks on ServiceLocator destruction
+- `IDestroyable` – Implement to receive cleanup callbacks on OmniServio destruction
 
 ### Bootstrappers
 
-- `ServiceLocatorGlobalBootstrapper` – Base class for global service registration
-- `ServiceLocatorSceneBootstrapper` – Base class for scene-specific service registration
+- `OmniServioGlobalBootstrapper` – Base class for global service registration
+- `OmniServioSceneBootstrapper` – Base class for scene-specific service registration
 
 ---
 
@@ -274,9 +385,19 @@ Samples/
 
 ### Service Resolution
 
-1. **Use `ServiceLocator.For(this)`** – This automatically resolves through the hierarchy
-2. **Cache References** – Store service references in fields rather than retrieving repeatedly
-3. **Null Checks** – Always check if services are null before use
+1. **Use `OmniServio.For(this)`** – This automatically resolves through the hierarchy
+2. **Prefer Dependency Injection** – Use `[Inject]` attribute instead of manual retrieval when possible
+3. **Cache References** – Store service references in fields rather than retrieving repeatedly
+4. **Null Checks** – Always check if services are null before use
+
+### Dependency Injection
+
+1. **Automatic Injection** – Injection happens automatically when bootstrappers are present - no manual setup needed!
+2. **Execution Order** – Bootstrappers run first (order -100), then DependencyInjectionManager runs (order 100)
+3. **Private Fields** – Use private fields with `[Inject]` for encapsulation
+4. **Properties** – Use properties with `[Inject]` if you need public access
+5. **Global Services** – Use `[Inject(UseGlobal = true)]` for services that should always come from global
+6. **Manual Injection** – Use `DependencyInjector.Inject()` for runtime injection scenarios
 
 ### Lifecycle Management
 
@@ -293,6 +414,7 @@ The package includes sample scripts demonstrating:
 - Service interface and implementation patterns
 - Global and scene bootstrapper setup
 - Service consumption in MonoBehaviour components
+- Automatic dependency injection with `[Inject]` attribute
 - Update callback integration
 - Lifecycle management
 
@@ -300,13 +422,21 @@ The package includes sample scripts demonstrating:
 1. Check the `Samples/` folder in the package
 2. Copy sample scripts to your project
 3. Create GameObjects with bootstrapper components
-4. Test service registration and retrieval
+4. Add `AutoInjectComponent` to test automatic injection
+5. Test service registration and retrieval
 
 ---
 
 ## 📝 Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for version history.
+### Version 2.0.0
+- **BREAKING CHANGE**: Renamed from ServiceLocator to OmniServio
+- Added automatic dependency injection with `[Inject]` attribute
+- Added `DependencyInjector` class for reflection-based injection
+- Added `AutoInjectComponent` for automatic injection on Awake
+- Improved namespace organization
+
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 ---
 
@@ -314,19 +444,27 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 **Issue:** Service not found exception
 - Ensure the service is registered before it's requested
-- Check that you're using the correct ServiceLocator (global vs scene)
+- Check that you're using the correct OmniServio (global vs scene)
 - Verify the service type matches exactly (including generic parameters)
 
+**Issue:** Dependencies not injected
+- Ensure a bootstrapper (`OmniServioSceneBootstrapper` or `OmniServioGlobalBootstrapper`) exists in the scene
+- Check that `DependencyInjectionManager` was created (should happen automatically)
+- Verify services are registered in the bootstrapper before injection occurs
+- Verify fields/properties are marked with `[Inject]` attribute
+- Check console for injection warnings
+- Ensure execution order: Bootstrappers (-100) → DependencyInjectionManager (100)
+
 **Issue:** Services not persisting across scenes
-- Use `ServiceLocatorGlobalBootstrapper` for cross-scene services
+- Use `OmniServioGlobalBootstrapper` for cross-scene services
 - Ensure `dontDestroyOnLoad` is set to `true` on the global bootstrapper
 
 **Issue:** Update callbacks not firing
 - Verify the service implements `IUpdatable`, `IFixedUpdatable`, or `ILateUpdatable`
 - Ensure the service is registered using `RegisterUpdatable`, `RegisterFixedUpdatable`, or `RegisterLateUpdatable`
 
-**Issue:** Multiple ServiceLocators in scene
-- Only one ServiceLocator per scene is recommended
+**Issue:** Multiple OmniServios in scene
+- Only one OmniServio per scene is recommended
 - Use the hierarchy system if you need nested service resolution
 
 ---
@@ -357,7 +495,7 @@ Contributions are welcome! Please:
 ## 💬 Support
 
 **Found a bug or have a feature request?**
-- Open an issue on [GitHub](https://github.com/AtaYanki/ServiceLocator/issues)
+- Open an issue on [GitHub](https://github.com/AtaYanki/OmniServio/issues)
 - Provide Unity version, error logs, and reproduction steps
 
 **Need help integrating?**
@@ -369,4 +507,4 @@ Contributions are welcome! Please:
 
 ## 🏷️ Keywords
 
-Unity, Dependency Injection, Service Locator, IoC, Design Patterns, Architecture, Services, Global Services, Scene Services
+Unity, Dependency Injection, Service Locator, IoC, Design Patterns, Architecture, Services, Global Services, Scene Services, Reflection, Automatic Injection

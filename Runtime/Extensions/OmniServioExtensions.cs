@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace AtaYanki.ServiceLocator
+namespace AtaYanki.OmniServio
 {
-    public static class ServiceLocatorExtensions
+    public static class OmniServioExtensions
     {
         /// <summary>
         /// Returns the object itself if it exists, null otherwise.

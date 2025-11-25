@@ -1,8 +1,8 @@
 {
-  "name": "com.atayanki.servicelocator",
-  "version": "1.0.0",
-  "displayName": "Service Locator",
-  "description": "A flexible and powerful Service Locator pattern implementation for Unity with support for global, scene, and hierarchical service resolution.",
+  "name": "com.atayanki.omniservio",
+  "version": "2.0.0",
+  "displayName": "OmniServio",
+  "description": "A flexible and powerful dependency injection and service locator system for Unity with support for global, scene, and hierarchical service resolution, automatic dependency injection via [Inject] attribute, and reflection-based injection.",
   "unity": "6000.0",
   "author": {
     "name": "AtaYanki"
