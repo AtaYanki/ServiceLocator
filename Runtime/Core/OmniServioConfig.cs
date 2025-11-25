@@ -10,7 +10,6 @@ namespace AtaYanki.OmniServio
     /// Global configuration for OmniServio service locator.
     /// Create this asset via the menu: Assets > Create > OmniServio > Config
     /// </summary>
-    [CreateAssetMenu(fileName = "OmniServioConfig", menuName = "OmniServio/Config", order = 1)]
     public class OmniServioConfig : ScriptableObject
     {
         [Header("Dependency Injection Settings")]

@@ -12,47 +12,21 @@ namespace AtaYanki.OmniServio.Editor
     [InitializeOnLoad]
     public class SceneBootstrapper
     {
-        // Use these keys for Editor preferences
+        // Use this key for Editor preferences (only for tracking previous scene)
         private const string k_PreviousScene = "OmniServio.PreviousScene";
-        private const string k_ShouldLoadBootstrap = "OmniServio.LoadBootstrapScene";
-        private const string k_BootstrapScenePath = "OmniServio.BootstrapScenePath";
 
-        // These appear as menu names
-        private const string k_LoadBootstrapMenu = "OmniServio/Load Bootstrap Scene On Play";
-        private const string k_DontLoadBootstrapMenu = "OmniServio/Don't Load Bootstrap Scene On Play";
-
-        // This gets the bootstrap scene path from config or uses default
+        // This gets the bootstrap scene path from config
         private static string BootstrapScenePath
         {
             get
             {
-                // First, try to get from config
                 var config = OmniServioConfig.Instance;
-                if (config != null && config.GlobalBootstrapScene != null)
+                if (config == null || config.GlobalBootstrapScene == null)
                 {
-                    string path = config.GetBootstrapScenePath();
-                    if (!string.IsNullOrEmpty(path))
-                    {
-                        return path;
-                    }
+                    return null;
                 }
 
-                // Fallback: Try to find a scene with "Bootstrap" in the name
-                foreach (var scene in EditorBuildSettings.scenes)
-                {
-                    if (scene.path.Contains("Bootstrap") || scene.path.Contains("bootstrap"))
-                    {
-                        return scene.path;
-                    }
-                }
-                
-                // Last resort: first scene in build settings
-                if (EditorBuildSettings.scenes.Length > 0)
-                {
-                    return EditorBuildSettings.scenes[0].path;
-                }
-                
-                return "";
+                return config.GetBootstrapScenePath();
             }
         }
 
@@ -63,36 +37,13 @@ namespace AtaYanki.OmniServio.Editor
             set => EditorPrefs.SetString(k_PreviousScene, value);
         }
 
-        // Is the bootstrap behavior enabled?
+        // Is the bootstrap behavior enabled? (read-only from config)
         private static bool ShouldLoadBootstrapScene
         {
             get
             {
-                // Check config first
                 var config = OmniServioConfig.Instance;
-                if (config != null)
-                {
-                    return config.AutoLoadBootstrapSceneInEditor;
-                }
-                
-                // Fallback to EditorPrefs for backward compatibility
-                return EditorPrefs.GetBool(k_ShouldLoadBootstrap, false);
-            }
-            set
-            {
-                // Update config if available
-                var config = OmniServioConfig.Instance;
-                if (config != null)
-                {
-                    // Note: We can't directly modify ScriptableObject properties from here
-                    // This is a read-only check. Users should modify via the config inspector.
-                    Debug.LogWarning("[SceneBootstrapper] To change auto-load setting, modify OmniServioConfig asset directly.");
-                }
-                else
-                {
-                    // Fallback to EditorPrefs
-                    EditorPrefs.SetBool(k_ShouldLoadBootstrap, value);
-                }
+                return config != null && config.AutoLoadBootstrapSceneInEditor;
             }
         }
 
@@ -208,7 +159,7 @@ namespace AtaYanki.OmniServio.Editor
 
                     if (string.IsNullOrEmpty(bootstrapPath))
                     {
-                        Debug.LogWarning("[SceneBootstrapper] No bootstrap scene configured. Please set it in OmniServio preferences or ensure a scene with 'Bootstrap' in the name exists in Build Settings.");
+                        Debug.LogWarning("[SceneBootstrapper] No bootstrap scene configured. Please set it in OmniServio Config (OmniServio > Config > Settings) or create a config asset.");
                         return;
                     }
 
@@ -274,37 +225,6 @@ namespace AtaYanki.OmniServio.Editor
             }
         }
 
-        // These menu items toggle behavior.
-
-        // This adds a menu item called "Load Bootstrap Scene On Play" to the GameSystems menu and
-        // enables the behavior if selected.
-        [MenuItem(k_LoadBootstrapMenu)]
-        private static void EnableBootstrapper()
-        {
-            ShouldLoadBootstrapScene = true;
-        }
-
-        // Validates the above function and menu item, which grays out if ShouldLoadBootstrapScene is true.
-        [MenuItem(k_LoadBootstrapMenu, true)]
-        private static bool ValidateEnableBootstrapper()
-        {
-            return !ShouldLoadBootstrapScene;
-        }
-
-        // Adds a menu item called "Don't Load Bootstrap Scene On Play" to the GameSystems menu and
-        // disables the behavior if selected.
-        [MenuItem(k_DontLoadBootstrapMenu)]
-        private static void DisableBootstrapper()
-        {
-            ShouldLoadBootstrapScene = false;
-        }
-
-        // Validates the above function and menu item, which grays out if ShouldLoadBootstrapScene is false.
-        [MenuItem(k_DontLoadBootstrapMenu, true)]
-        private static bool ValidateDisableBootstrapper()
-        {
-            return ShouldLoadBootstrapScene;
-        }
 
         // Is a scenePath a valid scene in the File > Build Settings?
         private static bool IsSceneInBuildSettings(string scenePath)

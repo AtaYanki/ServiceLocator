@@ -139,7 +139,6 @@ namespace AtaYanki.OmniServio.Editor
     /// </summary>
     public static class OmniServioConfigCreator
     {
-        [MenuItem("OmniServio/Config/Create Config Asset", priority = 2)]
         public static void CreateConfig()
         {
             // Check if config already exists
