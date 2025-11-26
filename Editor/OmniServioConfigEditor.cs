@@ -3,9 +3,6 @@ using UnityEngine;
 
 namespace AtaYanki.OmniServio.Editor
 {
-    /// <summary>
-    /// Custom editor for OmniServioConfig to provide helpful UI and validation.
-    /// </summary>
     [CustomEditor(typeof(OmniServioConfig))]
     public class OmniServioConfigEditor : UnityEditor.Editor
     {
@@ -34,7 +31,6 @@ namespace AtaYanki.OmniServio.Editor
 
             EditorGUILayout.Space();
 
-            // Dependency Injection Settings
             EditorGUILayout.LabelField("Dependency Injection Settings", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_defaultExceptionHandlerModeProp, new GUIContent("Exception Handler Mode"));
             EditorGUILayout.HelpBox(
@@ -44,7 +40,6 @@ namespace AtaYanki.OmniServio.Editor
 
             EditorGUILayout.Space();
 
-            // Bootstrap Scene Settings
             EditorGUILayout.LabelField("Bootstrap Scene Settings", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_globalBootstrapSceneProp, new GUIContent("Global Bootstrap Scene"));
             
@@ -56,7 +51,6 @@ namespace AtaYanki.OmniServio.Editor
             }
             else
             {
-                // Validate that the scene is in build settings
                 string scenePath = AssetDatabase.GetAssetPath(_globalBootstrapSceneProp.objectReferenceValue);
                 bool inBuildSettings = IsSceneInBuildSettings(scenePath);
                 
@@ -84,7 +78,6 @@ namespace AtaYanki.OmniServio.Editor
 
             EditorGUILayout.Space();
 
-            // Apply button
             if (GUILayout.Button("Apply Configuration", GUILayout.Height(30)))
             {
                 ApplyConfiguration();
@@ -97,7 +90,6 @@ namespace AtaYanki.OmniServio.Editor
         {
             var config = (OmniServioConfig)target;
             
-            // Apply exception handler mode immediately
             IInjectionExceptionHandler handler = config.DefaultExceptionHandlerMode switch
             {
                 InjectionExceptionHandlerMode.ThrowException => new ThrowExceptionHandler(),
@@ -134,14 +126,10 @@ namespace AtaYanki.OmniServio.Editor
         }
     }
 
-    /// <summary>
-    /// Menu item to create a new OmniServioConfig asset.
-    /// </summary>
     public static class OmniServioConfigCreator
     {
         public static void CreateConfig()
         {
-            // Check if config already exists
             string[] guids = AssetDatabase.FindAssets("t:OmniServioConfig");
             if (guids.Length > 0)
             {
@@ -158,7 +146,6 @@ namespace AtaYanki.OmniServio.Editor
             
             string pathToCreate = "Assets/OmniServioConfig.asset";
             
-            // If Resources folder exists, prefer it
             string resourcesPath = "Assets/Resources";
             if (AssetDatabase.IsValidFolder(resourcesPath))
             {
@@ -166,7 +153,6 @@ namespace AtaYanki.OmniServio.Editor
             }
             else
             {
-                // Create Resources folder
                 string[] folders = resourcesPath.Split('/');
                 string parentFolder = folders[0];
                 for (int i = 1; i < folders.Length; i++)
@@ -181,7 +167,6 @@ namespace AtaYanki.OmniServio.Editor
                 pathToCreate = "Assets/Resources/OmniServioConfig.asset";
             }
             
-            // Make sure the path doesn't already exist
             pathToCreate = AssetDatabase.GenerateUniqueAssetPath(pathToCreate);
             
             AssetDatabase.CreateAsset(config, pathToCreate);

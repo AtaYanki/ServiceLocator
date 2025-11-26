@@ -25,7 +25,6 @@ namespace AtaYanki.OmniServio
             {
                 if (_globalOmniServio != null) return _globalOmniServio;
 
-                // Bootstrap or initialize the new instance of global as necessary.
                 if (FindFirstObjectByType<OmniServioGlobalBootstrapper>() is {} omniServioGlobalBootstrapper)
                 {
                     omniServioGlobalBootstrapper.BootstrapOnDemand();
@@ -112,9 +111,6 @@ namespace AtaYanki.OmniServio
             return this;
         }
 
-        /// <summary>
-        /// Publishes a service registration event to notify subscribers.
-        /// </summary>
         private void PublishServiceRegisteredEvent(Type serviceType, object service)
         {
             ServiceRegistrationEventBus.Publish(serviceType, service, this);
@@ -213,10 +209,6 @@ namespace AtaYanki.OmniServio
             throw new ArgumentException($"[OmniServio].Get - Service of type {typeof(T).FullName} not registered.");
         }
 
-        /// <summary>
-        /// Tries to get a service without throwing an exception.
-        /// Returns true if the service was found, false otherwise.
-        /// </summary>
         public bool TryGet<T>(out T service) where T : class
         {
             if (TryGetService(out service)) return true;

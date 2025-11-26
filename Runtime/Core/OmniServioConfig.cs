@@ -6,10 +6,6 @@ using UnityEditor;
 
 namespace AtaYanki.OmniServio
 {
-    /// <summary>
-    /// Global configuration for OmniServio service locator.
-    /// Create this asset via the menu: Assets > Create > OmniServio > Config
-    /// </summary>
     public class OmniServioConfig : ScriptableObject
     {
         [Header("Dependency Injection Settings")]
@@ -30,33 +26,18 @@ namespace AtaYanki.OmniServio
         [Tooltip("Whether to load the bootstrap scene at runtime (for builds).")]
         [SerializeField] private bool loadBootstrapSceneAtRuntime = false;
 
-        /// <summary>
-        /// Gets the default exception handler mode.
-        /// </summary>
         public InjectionExceptionHandlerMode DefaultExceptionHandlerMode => defaultExceptionHandlerMode;
 
-        /// <summary>
-        /// Gets the global bootstrap scene asset (editor only).
-        /// </summary>
 #if UNITY_EDITOR
         public SceneAsset GlobalBootstrapScene => globalBootstrapScene;
 #else
         public string GlobalBootstrapSceneName => globalBootstrapSceneName;
 #endif
 
-        /// <summary>
-        /// Gets whether to auto-load bootstrap scene in editor.
-        /// </summary>
         public bool AutoLoadBootstrapSceneInEditor => autoLoadBootstrapSceneInEditor;
 
-        /// <summary>
-        /// Gets whether to load bootstrap scene at runtime.
-        /// </summary>
         public bool LoadBootstrapSceneAtRuntime => loadBootstrapSceneAtRuntime;
 
-        /// <summary>
-        /// Gets the bootstrap scene path as a string (editor only).
-        /// </summary>
         public string GetBootstrapScenePath()
         {
 #if UNITY_EDITOR
@@ -66,13 +47,10 @@ namespace AtaYanki.OmniServio
             }
             return AssetDatabase.GetAssetPath(globalBootstrapScene);
 #else
-            return null; // Not available at runtime
+            return null;
 #endif
         }
 
-        /// <summary>
-        /// Gets the bootstrap scene name.
-        /// </summary>
         public string GetBootstrapSceneName()
         {
 #if UNITY_EDITOR
@@ -86,9 +64,6 @@ namespace AtaYanki.OmniServio
 #endif
         }
 
-        /// <summary>
-        /// Sets the exception handler mode.
-        /// </summary>
         public void SetExceptionHandlerMode(InjectionExceptionHandlerMode mode)
         {
             defaultExceptionHandlerMode = mode;
@@ -97,9 +72,6 @@ namespace AtaYanki.OmniServio
 #endif
         }
 
-        /// <summary>
-        /// Sets the global bootstrap scene (editor only).
-        /// </summary>
 #if UNITY_EDITOR
         public void SetGlobalBootstrapScene(SceneAsset scene)
         {
@@ -113,10 +85,6 @@ namespace AtaYanki.OmniServio
         }
 #endif
 
-        /// <summary>
-        /// Gets the singleton instance of the config.
-        /// Searches for the config asset in Resources folder or via AssetDatabase.
-        /// </summary>
         public static OmniServioConfig Instance
         {
             get
@@ -127,10 +95,8 @@ namespace AtaYanki.OmniServio
                 }
 
 #if UNITY_EDITOR
-                // Try to find in Resources first
                 _instance = Resources.Load<OmniServioConfig>("OmniServioConfig");
                 
-                // If not found, search all assets
                 if (_instance == null)
                 {
                     string[] guids = AssetDatabase.FindAssets("t:OmniServioConfig");
@@ -141,7 +107,6 @@ namespace AtaYanki.OmniServio
                     }
                 }
 #else
-                // At runtime, load from Resources
                 _instance = Resources.Load<OmniServioConfig>("OmniServioConfig");
 #endif
 
@@ -153,7 +118,6 @@ namespace AtaYanki.OmniServio
 
         private void OnEnable()
         {
-            // Initialize the singleton when the asset is loaded
             if (_instance == null)
             {
                 _instance = this;

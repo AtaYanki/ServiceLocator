@@ -1,6 +1,6 @@
 # OmniServio
 
-A flexible and powerful dependency injection and service locator system for Unity. This package provides a robust dependency injection system with support for global, scene-specific, and hierarchical service resolution, automatic dependency injection via `[Inject]` attribute, and reflection-based injection, making it easy to manage dependencies across your Unity project.
+A flexible and powerful dependency injection and service locator system for Unity. This package provides a robust dependency injection system with support for global, scene-specific, and hierarchical service resolution, automatic dependency injection via `[Inject]` attribute, runtime dependency injection with event bus, configurable exception handling, and comprehensive configuration management, making it easy to manage dependencies across your Unity project.
 
 ---
 
@@ -9,11 +9,14 @@ A flexible and powerful dependency injection and service locator system for Unit
 * **Global & Scene Services** – Register services globally or per-scene with automatic lifecycle management
 * **Hierarchical Resolution** – Services resolve through parent hierarchy, scene, and global locators automatically
 * **Automatic Dependency Injection** – Use `[Inject]` attribute for automatic field and property injection via reflection
+* **Runtime Dependency Injection** – Components automatically receive services when they become available at runtime
+* **Configurable Error Handling** – Choose between warning mode or exception mode for injection errors
+* **Configuration System** – Centralized settings via ScriptableObject config and Settings window
 * **Update Integration** – Register services that need `Update()`, `FixedUpdate()`, or `LateUpdate()` callbacks
 * **Lifecycle Management** – Automatic cleanup with `IDestroyable` interface support
 * **Type-Safe** – Strongly-typed service registration and retrieval
 * **Zero Configuration** – Works out of the box with minimal setup
-* **Editor Integration** – Quick creation via Unity menu items
+* **Editor Integration** – Quick creation via Unity menu items and Settings window
 
 ---
 
@@ -304,31 +307,114 @@ OmniServio.Global
     .RegisterDestroyable<NetworkManager>(new NetworkManager());
 ```
 
+### Runtime Dependency Injection
+
+For components that need to receive services registered at runtime, inherit from `RuntimeInjectable`:
+
+```csharp
+using AtaYanki.OmniServio;
+using UnityEngine;
+
+public class MyComponent : RuntimeInjectable
+{
+    [Inject] private IAudioService _audioService;
+    [Inject(UseGlobal = true)] private IConfigService _configService;
+
+    protected override void OnServiceInjected(MemberInfo memberInfo, Type serviceType, object service)
+    {
+        // Called when a service is injected at runtime
+        if (serviceType == typeof(IAudioService))
+        {
+            Debug.Log("Audio service is now available!");
+        }
+    }
+}
+```
+
+When a service is registered at runtime:
+```csharp
+omniServio.Register(new AudioService());
+```
+
+Components inheriting from `RuntimeInjectable` automatically receive the service when it becomes available.
+
+### Configuration System
+
+OmniServio includes a comprehensive configuration system accessible via **OmniServio > Config > Settings**.
+
+**Opening Settings:**
+- Menu: `OmniServio > Config > Settings`
+- Config is automatically created if it doesn't exist
+
+**Configuration Options:**
+- **Exception Handler Mode** - Choose Warning (default) or ThrowException mode
+- **Bootstrap Scene** - Assign global bootstrap scene reference
+- **Auto Load in Editor** - Automatically load bootstrap scene when entering Play mode
+- **Load at Runtime** - Load bootstrap scene when game starts (for builds)
+
+**Exception Handler Modes:**
+- **Warning** - Logs warnings when injection fails, execution continues
+- **ThrowException** - Throws exceptions when injection fails, stops execution
+
+The configuration is stored as a ScriptableObject asset and can be placed in the Resources folder for runtime access.
+
+### Exception Handler Configuration
+
+You can configure exception handling globally via config or per-instance:
+
+**Global Configuration (via Config):**
+```csharp
+// Set in OmniServioConfig asset via Settings window
+// All DependencyInjectionManager instances use this by default
+```
+
+**Per-Instance Configuration:**
+```csharp
+// In DependencyInjectionManager inspector
+// Uncheck "Use Global Config" and set "Exception Handler Mode" locally
+```
+
 ---
 
 ## 📂 Package Structure
 
 ```
 Runtime/
-  ├── OmniServio.cs                    # Main OmniServio component
-  ├── Bootstrapper.cs                  # Base bootstrapper classes (execution order -100)
-  ├── ServiceManager.cs                # Core service registry
-  ├── UpdateManager.cs                 # Update callback management
-  ├── DestroyManager.cs                # Lifecycle cleanup management
-  ├── OmniServioExtensions.cs          # Utility extensions
-  ├── InjectAttribute.cs               # [Inject] attribute for DI
-  ├── DependencyInjector.cs            # Reflection-based injection system
-  ├── DependencyInjectionManager.cs    # Automatic injection manager (execution order 100)
-  └── AutoInjectComponent.cs           # [DEPRECATED] Manual injection component
+  ├── Core/
+  │   ├── OmniServio.cs                    # Main OmniServio component
+  │   ├── ServiceManager.cs                # Core service registry
+  │   ├── OmniServioConfig.cs              # Configuration ScriptableObject
+  │   └── BootstrapSceneLoader.cs          # Runtime bootstrap scene loader
+  ├── DependencyInjection/
+  │   ├── InjectAttribute.cs               # [Inject] attribute for DI
+  │   ├── DependencyInjector.cs            # Reflection-based injection system
+  │   ├── DependencyInjectionManager.cs    # Automatic injection manager (execution order 100)
+  │   ├── RuntimeInjectable.cs             # Base class for runtime injection
+  │   ├── ServiceRegistrationEventBus.cs   # Event bus for service registration
+  │   ├── IInjectionExceptionHandler.cs    # Exception handler interface
+  │   ├── ThrowExceptionHandler.cs         # Exception handler (strict mode)
+  │   └── WarningExceptionHandler.cs       # Exception handler (warning mode)
+  ├── Bootstrapping/
+  │   ├── Bootstrapper.cs                  # Base bootstrapper classes (execution order -100)
+  │   ├── OmniServioGlobalBootstrapper.cs  # Global bootstrapper
+  │   └── OmniServioSceneBootstrapper.cs   # Scene bootstrapper
+  ├── Lifecycle/
+  │   ├── UpdateManager.cs                 # Update callback management
+  │   └── DestroyManager.cs                # Lifecycle cleanup management
+  └── Extensions/
+      └── OmniServioExtensions.cs          # Utility extensions
 
 Editor/
-  └── OmniServioMenuItems.cs          # Unity menu integration
+  ├── OmniServioMenuItems.cs              # Unity menu integration
+  ├── OmniServioSettingsWindow.cs          # Settings window
+  ├── OmniServioConfigEditor.cs            # Config asset editor
+  └── SceneBootstrapper.cs                 # Bootstrap scene loader (editor)
 
 Samples/
   ├── Scripts/
-  │   ├── SampleServices.cs          # Example service interfaces/implementations
-  │   ├── SampleBootstrapper.cs      # Example bootstrapper
-  │   └── SampleConsumer.cs          # Example service consumer
+  │   ├── SampleServices.cs                # Example service interfaces/implementations
+  │   ├── SampleBootstrapper.cs            # Example bootstrapper
+  │   └── SampleConsumer.cs                # Example service consumer
 ```
 
 ---
@@ -352,14 +438,26 @@ Samples/
 - `OmniServio RegisterLateUpdatable<T>(T service)` – Register a service that implements `ILateUpdatable`
 - `OmniServio RegisterDestroyable<T>(T service)` – Register a service that implements `IDestroyable`
 - `OmniServio Get<T>(out T service)` – Retrieve a service (throws if not found)
+- `bool TryGet<T>(out T service)` – Try to get a service (returns false if not found)
 
 ### Dependency Injection
 
 - `[Inject]` – Attribute to mark fields and properties for automatic injection
 - `[Inject(UseGlobal = true)]` – Always inject from global OmniServio
 - `DependencyInjector.Inject(MonoBehaviour component, OmniServio omniServio = null)` – Manually inject dependencies
+- `DependencyInjector.SetExceptionHandler(IInjectionExceptionHandler handler)` – Set custom exception handler
 - `DependencyInjectionManager` – Automatically created by bootstrappers to handle injection (execution order 100)
-- `AutoInjectComponent` – [DEPRECATED] No longer needed - injection is automatic via DependencyInjectionManager
+- `RuntimeInjectable` – Base class for components needing runtime dependency injection
+- `ServiceRegistrationEventBus` – Event bus for service registration notifications
+
+### Configuration
+
+- `OmniServioConfig` – ScriptableObject configuration asset
+- `OmniServioConfig.Instance` – Singleton access to config
+- `OmniServioSettingsWindow` – Editor window for configuration (OmniServio > Config > Settings)
+- `IInjectionExceptionHandler` – Interface for custom exception handlers
+- `ThrowExceptionHandler` – Exception handler that throws on errors
+- `WarningExceptionHandler` – Exception handler that logs warnings (default)
 
 ### Interfaces
 

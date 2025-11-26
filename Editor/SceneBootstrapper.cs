@@ -1,21 +1,15 @@
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 
 namespace AtaYanki.OmniServio.Editor
 {
-    /// <summary>
-    /// Editor script that automatically loads a bootstrap scene when entering Play mode.
-    /// Useful for ensuring services are registered before gameplay starts.
-    /// </summary>
     [InitializeOnLoad]
     public class SceneBootstrapper
     {
-        // Use this key for Editor preferences (only for tracking previous scene)
         private const string k_PreviousScene = "OmniServio.PreviousScene";
 
-        // This gets the bootstrap scene path from config
         private static string BootstrapScenePath
         {
             get
@@ -30,14 +24,12 @@ namespace AtaYanki.OmniServio.Editor
             }
         }
 
-        // This string is the scene path where we entered Play mode 
         private static string PreviousScene
         {
             get => EditorPrefs.GetString(k_PreviousScene);
             set => EditorPrefs.SetString(k_PreviousScene, value);
         }
 
-        // Is the bootstrap behavior enabled? (read-only from config)
         private static bool ShouldLoadBootstrapScene
         {
             get
@@ -47,41 +39,29 @@ namespace AtaYanki.OmniServio.Editor
             }
         }
 
-        // Track if we've captured the previous scene for this play session
         private static bool _hasCapturedPreviousScene = false;
         
-        // Track if we've loaded the previous scene after bootstrap
         private static bool _hasLoadedPreviousScene = false;
         private static int _framesWaited = 0;
         private static float _timeWaited = 0f;
         
-        // Configuration for waiting for bootstrappers
-        private const float MaxWaitTime = 5f; // Maximum time to wait in seconds
-        private const int MinFramesToWait = 5; // Minimum frames to wait
-        private const float AdditionalWaitPerFrame = 0.1f; // Additional time per frame
+        private const float MaxWaitTime = 5f;
+        private const int MinFramesToWait = 5;
+        private const float AdditionalWaitPerFrame = 0.1f;
 
-        // A static constructor runs with InitializeOnLoad attribute
         static SceneBootstrapper()
         {
-            // Listen for the Editor changing play states
-            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-            
-            // Also listen to update to capture scene before play mode starts
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;            
             EditorApplication.update += OnEditorUpdate;
         }
 
-        // Capture the current scene before play mode starts
         private static void OnEditorUpdate()
         {
-            // Only capture if feature is enabled and we haven't captured yet
             if (!ShouldLoadBootstrapScene || _hasCapturedPreviousScene)
                 return;
 
-            // Capture scene when play mode is about to start (but we're still in edit mode)
-            // This happens before ExitingEditMode is called
             if (EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isPlaying)
             {
-                // Capture the scene path immediately, before any scene switching happens
                 if (EditorSceneManager.GetActiveScene().IsValid())
                 {
                     PreviousScene = EditorSceneManager.GetActiveScene().path;
@@ -90,7 +70,6 @@ namespace AtaYanki.OmniServio.Editor
                 }
             }
             
-            // Reset flag when we're back in edit mode
             if (!EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isPlaying)
             {
                 _hasCapturedPreviousScene = false;
@@ -99,25 +78,17 @@ namespace AtaYanki.OmniServio.Editor
                 _timeWaited = 0f;
             }
             
-            // Handle loading previous scene after bootstrap in play mode
             if (EditorApplication.isPlaying && ShouldLoadBootstrapScene && !_hasLoadedPreviousScene && !string.IsNullOrEmpty(PreviousScene))
             {
-                // Wait for bootstrappers to initialize (they run at execution order -100)
                 _framesWaited++;
                 _timeWaited += UnityEngine.Time.deltaTime;
                 
-                // Check if all bootstrappers have completed
                 bool allBootstrappersComplete = AreAllBootstrappersComplete();
                 
-                // Wait for minimum frames AND minimum time to handle long-running tasks
-                // This ensures bootstrappers have time to complete async operations
                 bool minFramesMet = _framesWaited >= MinFramesToWait;
                 bool minTimeMet = _timeWaited >= AdditionalWaitPerFrame * MinFramesToWait;
                 bool maxTimeExceeded = _timeWaited >= MaxWaitTime;
                 
-                // Load previous scene if:
-                // 1. All bootstrappers are complete AND minimum wait conditions met, OR
-                // 2. Max time exceeded (to prevent infinite wait)
                 if ((allBootstrappersComplete && minFramesMet && minTimeMet) || maxTimeExceeded)
                 {
                     if (maxTimeExceeded && !allBootstrappersComplete)
@@ -129,10 +100,8 @@ namespace AtaYanki.OmniServio.Editor
             }
         }
 
-        // This runs when the Editor changes play state (e.g. entering Play mode, exiting Play mode)
         private static void OnPlayModeStateChanged(PlayModeStateChange playModeStateChange)
         {
-            // Do nothing if disabled from the menus
             if (!ShouldLoadBootstrapScene)
             {
                 return;
@@ -140,10 +109,7 @@ namespace AtaYanki.OmniServio.Editor
 
             switch (playModeStateChange)
             {
-                // This sets up the bootstrap scene when entering Play mode
                 case PlayModeStateChange.ExitingEditMode:
-                    // Previous scene should already be captured in OnEditorUpdate
-                    // But if for some reason it wasn't, capture it now as fallback
                     if (string.IsNullOrEmpty(PreviousScene))
                     {
                         PreviousScene = EditorSceneManager.GetActiveScene().path;
@@ -154,7 +120,6 @@ namespace AtaYanki.OmniServio.Editor
                         Debug.Log($"[SceneBootstrapper] Using captured previous scene: {PreviousScene}");
                     }
 
-                    // Get the bootstrap scene path
                     string bootstrapPath = BootstrapScenePath;
 
                     if (string.IsNullOrEmpty(bootstrapPath))
@@ -163,22 +128,18 @@ namespace AtaYanki.OmniServio.Editor
                         return;
                     }
 
-                    // Check if scene exists in build settings
                     if (!IsSceneInBuildSettings(bootstrapPath))
                     {
                         Debug.LogWarning($"[SceneBootstrapper] Bootstrap scene '{bootstrapPath}' is not in Build Settings. Skipping bootstrap scene load.");
                         return;
                     }
 
-                    // Save current scene if modified
                     if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
                     {
-                        // User cancelled save, abort play mode entry
                         EditorApplication.isPlaying = false;
                         return;
                     }
 
-                    // Set the play mode start scene - this will load automatically when entering play mode
                     SceneAsset bootstrapScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(bootstrapPath);
                     if (bootstrapScene != null)
                     {
@@ -191,32 +152,25 @@ namespace AtaYanki.OmniServio.Editor
                     }
                     break;
 
-                // This loads the bootstrap scene when play mode actually starts
                 case PlayModeStateChange.EnteredPlayMode:
-                    // Reset flags for new play session
                     _hasLoadedPreviousScene = false;
                     _framesWaited = 0;
                     _timeWaited = 0f;
                     
-                    // The scene should already be loaded by playModeStartScene, but verify
                     string currentScenePath = SceneManager.GetActiveScene().path;
                     string expectedBootstrapPath = BootstrapScenePath;
 
                     if (!string.IsNullOrEmpty(expectedBootstrapPath) &&
                         !currentScenePath.Equals(expectedBootstrapPath, System.StringComparison.OrdinalIgnoreCase))
                     {
-                        // If for some reason the scene didn't load, load it now
                         Debug.Log($"[SceneBootstrapper] Loading bootstrap scene: {expectedBootstrapPath}");
                         SceneManager.LoadScene(System.IO.Path.GetFileNameWithoutExtension(expectedBootstrapPath));
                     }
                     break;
 
-                // This restores the PreviousScene when exiting Play mode
                 case PlayModeStateChange.EnteredEditMode:
-                    // Clear the play mode start scene
                     EditorSceneManager.playModeStartScene = null;
                     
-                    // Reset flags
                     _hasCapturedPreviousScene = false;
                     _hasLoadedPreviousScene = false;
                     _framesWaited = 0;
@@ -226,13 +180,11 @@ namespace AtaYanki.OmniServio.Editor
         }
 
 
-        // Is a scenePath a valid scene in the File > Build Settings?
         private static bool IsSceneInBuildSettings(string scenePath)
         {
             if (string.IsNullOrEmpty(scenePath))
                 return false;
 
-            // Normalize paths for comparison
             string normalizedPath = scenePath.Replace('\\', '/');
 
             foreach (var scene in EditorBuildSettings.scenes)
@@ -242,7 +194,6 @@ namespace AtaYanki.OmniServio.Editor
 
                 string normalizedScenePath = scene.path.Replace('\\', '/');
 
-                // Check for exact match or if the scene path contains the bootstrap path
                 if (normalizedScenePath.Equals(normalizedPath, System.StringComparison.OrdinalIgnoreCase) ||
                     normalizedScenePath.Contains(normalizedPath) ||
                     normalizedPath.Contains(normalizedScenePath))
@@ -254,37 +205,27 @@ namespace AtaYanki.OmniServio.Editor
             return false;
         }
 
-        /// <summary>
-        /// Checks if all bootstrappers in the current scene have completed initialization.
-        /// Uses reflection to check the IsBootstrapComplete property.
-        /// </summary>
         private static bool AreAllBootstrappersComplete()
         {
             if (!EditorApplication.isPlaying)
                 return false;
 
-            // Get the Bootstrapper type using reflection (since editor can't directly reference runtime types)
             System.Type bootstrapperType = System.Type.GetType("AtaYanki.OmniServio.Bootstrapper, Assembly-CSharp");
             if (bootstrapperType == null)
             {
-                // If type not found, assume complete (fallback behavior)
                 return true;
             }
 
-            // Find all bootstrappers in the current scene
             var bootstrappers = Object.FindObjectsByType(bootstrapperType, FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             
             if (bootstrappers.Length == 0)
             {
-                // No bootstrappers found, assume complete
                 return true;
             }
 
-            // Get the IsBootstrapComplete property
             var completeProperty = bootstrapperType.GetProperty("IsBootstrapComplete", 
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
-            // Check if all bootstrappers are complete
             foreach (var bootstrapper in bootstrappers)
             {
                 if (bootstrapper == null) continue;
@@ -294,36 +235,28 @@ namespace AtaYanki.OmniServio.Editor
                     bool isComplete = (bool)completeProperty.GetValue(bootstrapper);
                     if (!isComplete)
                     {
-                        return false; // At least one bootstrapper is not complete
+                        return false;
                     }
                 }
                 else
                 {
-                    // Property not found, assume complete (fallback)
                     continue;
                 }
             }
 
-            return true; // All bootstrappers are complete
+            return true;
         }
 
-        /// <summary>
-        /// Loads the previous scene after bootstrap scene has initialized.
-        /// Called from OnEditorUpdate after waiting for bootstrappers to complete.
-        /// </summary>
         private static void LoadPreviousSceneAfterBootstrap()
         {
-            // Only load if we're still in play mode and have a previous scene
             if (!EditorApplication.isPlaying || string.IsNullOrEmpty(PreviousScene))
             {
                 return;
             }
 
-            // Check if we're currently in the bootstrap scene
             string currentScenePath = SceneManager.GetActiveScene().path;
             string bootstrapPath = BootstrapScenePath;
 
-            // Only load previous scene if we're in the bootstrap scene
             if (!string.IsNullOrEmpty(bootstrapPath) && 
                 currentScenePath.Equals(bootstrapPath, System.StringComparison.OrdinalIgnoreCase))
             {
@@ -331,10 +264,8 @@ namespace AtaYanki.OmniServio.Editor
                 bool allComplete = AreAllBootstrappersComplete();
                 Debug.Log($"[SceneBootstrapper] Bootstrap initialized ({_framesWaited} frames, {_timeWaited:F2}s, All complete: {allComplete}). Loading previous scene: {sceneName}");
                 
-                // Mark as loaded to prevent multiple loads
                 _hasLoadedPreviousScene = true;
                 
-                // Load the previous scene (replaces bootstrap scene)
                 SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
             }
         }

@@ -54,7 +54,6 @@ namespace AtaYanki.OmniServio.Samples
 
         private void Update()
         {
-            // Example: Use injected services in Update loop
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 _audioService?.PlaySound("space_pressed");
@@ -84,28 +83,20 @@ namespace AtaYanki.OmniServio.Samples
 
         private void OnGUI()
         {
-            // Calculate responsive GUI size based on screen dimensions
             float screenWidth = Screen.width;
             float screenHeight = Screen.height;
-            
-            // Calculate minimum required height for all content
-            // Header: ~25px, Status section: ~120px, Controls section: ~100px, Timer: ~30px, Spacing: ~40px
+
             float minContentHeight = 315f;
-            
-            // Use percentage-based sizing for responsiveness
-            float panelWidth = Mathf.Min(screenWidth * 0.35f, 450f); // 35% of screen width, max 450px
-            
-            // Dynamic height: use minimum content height or available screen space (whichever is larger)
-            // But don't exceed 85% of screen height to leave some margin
+            float panelWidth = Mathf.Min(screenWidth * 0.35f, 450f);
+
             float availableHeight = screenHeight * 0.85f;
             float panelHeight = Mathf.Max(minContentHeight, Mathf.Min(availableHeight, 600f));
-            
-            // Always position in top-left corner regardless of screen size
-            float panelX = screenWidth * 0.02f; // 2% from left edge
-            float panelY = screenHeight * 0.02f; // 2% from top edge
-            
+
+            float panelX = screenWidth * 0.02f;
+            float panelY = screenHeight * 0.02f;
+
             GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, panelHeight));
-            
+
             GUILayout.Label("Dependency Injection Sample", GUI.skin.box);
 
             GUILayout.Space(10);

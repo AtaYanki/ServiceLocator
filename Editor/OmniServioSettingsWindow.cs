@@ -1,13 +1,8 @@
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace AtaYanki.OmniServio.Editor
 {
-    /// <summary>
-    /// Settings window for OmniServio configuration.
-    /// Automatically creates config if it doesn't exist.
-    /// </summary>
     public class OmniServioSettingsWindow : EditorWindow
     {
         private OmniServioConfig _config;
@@ -59,7 +54,6 @@ namespace AtaYanki.OmniServio.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
-            // Dependency Injection Settings
             EditorGUILayout.LabelField("Dependency Injection Settings", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
@@ -83,11 +77,9 @@ namespace AtaYanki.OmniServio.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
-            // Bootstrap Scene Settings
             EditorGUILayout.LabelField("Bootstrap Scene Settings", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
-            // Scene Asset Field
             EditorGUI.BeginChangeCheck();
             SceneAsset currentScene = _config.GlobalBootstrapScene;
             SceneAsset newScene = (SceneAsset)EditorGUILayout.ObjectField(
@@ -103,7 +95,6 @@ namespace AtaYanki.OmniServio.Editor
                 _configNeedsSave = true;
             }
 
-            // Show scene validation
             if (newScene != null)
             {
                 string scenePath = _config.GetBootstrapScenePath();
@@ -136,7 +127,6 @@ namespace AtaYanki.OmniServio.Editor
 
             EditorGUILayout.Space();
 
-            // Auto-load settings
             EditorGUI.BeginChangeCheck();
             bool autoLoadInEditor = _config.AutoLoadBootstrapSceneInEditor;
             bool newAutoLoadInEditor = EditorGUILayout.Toggle(
@@ -166,7 +156,6 @@ namespace AtaYanki.OmniServio.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
-            // Action Buttons
             EditorGUILayout.BeginHorizontal();
 
             if (GUILayout.Button("Apply Configuration", GUILayout.Height(30)))
@@ -181,7 +170,6 @@ namespace AtaYanki.OmniServio.Editor
 
             EditorGUILayout.EndHorizontal();
 
-            // Show config path
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
             string configPath = AssetDatabase.GetAssetPath(_config);
@@ -196,7 +184,6 @@ namespace AtaYanki.OmniServio.Editor
 
             EditorGUILayout.EndScrollView();
 
-            // Show save indicator
             if (_configNeedsSave)
             {
                 EditorGUILayout.Space();
@@ -220,7 +207,6 @@ namespace AtaYanki.OmniServio.Editor
 
         private void CreateConfig()
         {
-            // Try to find existing config first
             string[] guids = AssetDatabase.FindAssets("t:OmniServioConfig");
             if (guids.Length > 0)
             {
@@ -230,10 +216,8 @@ namespace AtaYanki.OmniServio.Editor
                 return;
             }
 
-            // Create new config
             _config = ScriptableObject.CreateInstance<OmniServioConfig>();
 
-            // Try to create in Resources folder if it exists
             string resourcesPath = "Assets/Resources";
             string configPath;
 
@@ -243,7 +227,6 @@ namespace AtaYanki.OmniServio.Editor
             }
             else
             {
-                // Create Resources folder
                 string[] folders = resourcesPath.Split('/');
                 string parentFolder = folders[0];
                 for (int i = 1; i < folders.Length; i++)
@@ -258,7 +241,6 @@ namespace AtaYanki.OmniServio.Editor
                 configPath = "Assets/Resources/OmniServioConfig.asset";
             }
 
-            // Make sure path is unique
             configPath = AssetDatabase.GenerateUniqueAssetPath(configPath);
 
             AssetDatabase.CreateAsset(_config, configPath);
@@ -293,7 +275,6 @@ namespace AtaYanki.OmniServio.Editor
                 return;
             }
 
-            // Apply exception handler mode immediately
             IInjectionExceptionHandler handler = _config.DefaultExceptionHandlerMode switch
             {
                 InjectionExceptionHandlerMode.ThrowException => new ThrowExceptionHandler(),

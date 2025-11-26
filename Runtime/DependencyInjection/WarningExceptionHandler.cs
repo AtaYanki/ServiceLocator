@@ -4,10 +4,6 @@ using System.Reflection;
 
 namespace AtaYanki.OmniServio
 {
-    /// <summary>
-    /// Exception handler that logs warnings when injection errors occur.
-    /// Use this mode for graceful error handling that doesn't stop execution.
-    /// </summary>
     public class WarningExceptionHandler : IInjectionExceptionHandler
     {
         public void HandleInjectionError(MonoBehaviour component, MemberInfo memberInfo, Type serviceType, OmniServio injectionLocator)

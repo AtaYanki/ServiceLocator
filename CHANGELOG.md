@@ -107,15 +107,92 @@ Samples/
 
 ---
 
+## [2.0.0] - 2025-01-XX
+
+### 🎉 Major Update
+
+This release introduces runtime dependency injection, configurable error handling, and a comprehensive configuration system.
+
+### ✨ Added
+
+#### Runtime Dependency Injection
+- **RuntimeInjectable Base Class** - Abstract base class for components needing runtime injection
+- **ServiceRegistrationEventBus** - Event bus system for service registration notifications
+- **Automatic Runtime Injection** - Components automatically receive services when they become available at runtime
+- **Event-Based Architecture** - Services publish registration events, components subscribe and inject automatically
+
+#### Exception Handler System
+- **IInjectionExceptionHandler Interface** - Adapter pattern for custom error handling strategies
+- **ThrowExceptionHandler** - Strict mode that throws exceptions on injection errors
+- **WarningExceptionHandler** - Graceful mode that logs warnings (default)
+- **Configurable Error Handling** - Choose exception handling mode per DependencyInjectionManager or globally via config
+
+#### Configuration System
+- **OmniServioConfig ScriptableObject** - Centralized configuration for all OmniServio settings
+- **OmniServioSettingsWindow** - User-friendly editor window for configuration (OmniServio > Config > Settings)
+- **Auto-Create Config** - Config is automatically created when Settings window is opened
+- **Bootstrap Scene Management** - Configure bootstrap scene reference and auto-load settings
+- **Exception Handler Mode** - Global default exception handler mode configuration
+
+#### Bootstrap Scene System
+- **BootstrapSceneLoader** - Runtime loader for bootstrap scenes
+- **Config-Based Scene Loading** - Bootstrap scene loading controlled via config
+- **Editor Integration** - Automatic bootstrap scene loading in editor (configurable)
+
+#### Code Organization
+- **Folder Reorganization** - Runtime code organized into logical folders:
+  - `Core/` - Core service locator functionality
+  - `DependencyInjection/` - All DI-related code and exception handlers
+  - `Bootstrapping/` - Bootstrapper classes
+  - `Lifecycle/` - Update and destroy managers
+  - `Extensions/` - Extension methods
+
+### 🔄 Changed
+
+- **DependencyInjectionManager** - Now uses global config for exception handler mode by default
+- **SceneBootstrapper** - Removed EditorPrefs, now fully config-dependent
+- **Removed Menu Toggles** - Bootstrap scene toggle menu items removed (now in Settings window)
+
+### 🗑️ Removed
+
+- **Backward Compatibility** - Removed EditorPrefs fallbacks for bootstrap scene settings
+- **Menu Toggle Items** - Removed "Load Bootstrap Scene On Play" / "Don't Load Bootstrap Scene On Play" menu items
+
+### 📚 Documentation
+
+- Updated README with runtime injection examples
+- Added configuration system documentation
+- Added exception handler documentation
+- Updated package structure documentation
+
+### 🔧 Technical Details
+
+- **Exception Handler Pattern** - Adapter pattern implementation for flexible error handling
+- **Event Bus Pattern** - Decoupled service registration notifications
+- **ScriptableObject Config** - Persistent configuration via Unity asset system
+- **Editor Window** - Custom inspector for easy configuration management
+
+---
+
 ## Roadmap
+
+### Completed ✅
+- ✅ Runtime dependency injection with event bus
+- ✅ Configurable exception handling (adapter pattern)
+- ✅ Configuration system with Settings window
+- ✅ Bootstrap scene management
+- ✅ Automatic dependency injection via `[Inject]` attribute
+- ✅ Hierarchical service resolution
 
 ### Future Considerations
 - Service factory pattern support
-- Dependency injection with constructor parameters
-- Service lifetime management (singleton, transient, scoped)
-- Service validation and dependency checking
-- Performance profiling tools
-- Editor debugging tools
+- Constructor injection (in addition to field/property injection)
+- Explicit service lifetime management (singleton, transient, scoped)
+- Service dependency validation and circular dependency detection
+- Async service initialization support
+- Performance profiling and debugging tools
+- Editor visualizer for service dependencies
+- Service dependency graph visualization
 
 ---
 

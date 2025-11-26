@@ -2,7 +2,7 @@
   "name": "com.atayanki.omniservio",
   "version": "2.0.0",
   "displayName": "OmniServio",
-  "description": "A flexible and powerful dependency injection and service locator system for Unity with support for global, scene, and hierarchical service resolution, automatic dependency injection via [Inject] attribute, and reflection-based injection.",
+  "description": "A flexible and powerful dependency injection and service locator system for Unity with support for global, scene, and hierarchical service resolution, automatic dependency injection via [Inject] attribute, runtime dependency injection with event bus, configurable exception handling, and comprehensive configuration management.",
   "unity": "6000.0",
   "author": {
     "name": "AtaYanki"
