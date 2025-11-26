@@ -368,12 +368,6 @@ You can configure exception handling globally via config or per-instance:
 // All DependencyInjectionManager instances use this by default
 ```
 
-**Per-Instance Configuration:**
-```csharp
-// In DependencyInjectionManager inspector
-// Uncheck "Use Global Config" and set "Exception Handler Mode" locally
-```
-
 ---
 
 ## 📂 Package Structure
